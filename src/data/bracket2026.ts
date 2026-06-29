@@ -1,0 +1,138 @@
+/**
+ * FIFA World Cup 2026 knockout bracket structure.
+ * Source: https://worldcup26.ir/get/games (match IDs 73–104)
+ */
+
+/** R32 match index (0–15) → home/away slot labels */
+export const R32_FIFA_LABELS: { home: string; away: string }[] = [
+  { home: 'Runner-up Group A', away: 'Runner-up Group B' },
+  { home: 'Winner Group E', away: '3rd Group A/B/C/D/F' },
+  { home: 'Winner Group F', away: 'Runner-up Group C' },
+  { home: 'Winner Group C', away: 'Runner-up Group F' },
+  { home: 'Winner Group I', away: '3rd Group C/D/F/G/H' },
+  { home: 'Runner-up Group E', away: 'Runner-up Group I' },
+  { home: 'Winner Group A', away: '3rd Group C/E/F/H/I' },
+  { home: 'Winner Group L', away: '3rd Group E/H/I/J/K' },
+  { home: 'Winner Group D', away: '3rd Group B/E/F/I/J' },
+  { home: 'Winner Group G', away: '3rd Group A/E/H/I/J' },
+  { home: 'Runner-up Group K', away: 'Runner-up Group L' },
+  { home: 'Winner Group H', away: 'Runner-up Group J' },
+  { home: 'Winner Group B', away: '3rd Group E/F/G/I/J' },
+  { home: 'Winner Group J', away: 'Runner-up Group H' },
+  { home: 'Winner Group K', away: '3rd Group D/E/I/J/L' },
+  { home: 'Runner-up Group D', away: 'Runner-up Group G' },
+];
+
+/**
+ * Outer-ring slot order (32 positions, indices 0–31).
+ * Even index = home, odd = away for each R32 match.
+ * Representative teams for simulation (group winners/runners-up + best 3rd).
+ */
+export const R32_SLOT_TEAM_IDS: string[] = [
+  'kr', 'ca', // M73: 2A vs 2B
+  'de', 'za', // M74: 1E vs 3rd
+  'nl', 'ma', // M75: 1F vs 2C
+  'br', 'jp', // M76: 1C vs 2F
+  'fr', 'ht', // M77
+  'ec', 'no', // M78: 2E vs 2I
+  'mx', 'ci', // M79: 1A vs 3rd
+  'gb-eng', 'sn', // M80: 1L vs 3rd
+  'us', 'cw', // M81: 1D vs 3rd
+  'be', 'nz', // M82: 1G vs 3rd
+  'co', 'hr', // M83: 2K vs 2L
+  'es', 'at', // M84: 1H vs 2J
+  'ch', 'tn', // M85: 1B vs 3rd
+  'ar', 'uy', // M86: 1J vs 2H
+  'pt', 'gh', // M87: 1K vs 3rd
+  'au', 'ir', // M88: 2D vs 2G
+];
+
+/** R32 match index → R16 match index + slot (FIFA crossover, not binary tree) */
+const R32_TO_R16: { r16: number; slot: 1 | 2 }[] = [
+  { r16: 1, slot: 1 }, // M73 → R16-90
+  { r16: 0, slot: 1 }, // M74 → R16-89
+  { r16: 1, slot: 2 }, // M75
+  { r16: 2, slot: 1 }, // M76
+  { r16: 0, slot: 2 }, // M77
+  { r16: 2, slot: 2 }, // M78
+  { r16: 3, slot: 1 }, // M79
+  { r16: 3, slot: 2 }, // M80
+  { r16: 5, slot: 1 }, // M81 → R16-94
+  { r16: 5, slot: 2 }, // M82
+  { r16: 4, slot: 1 }, // M83 → R16-93
+  { r16: 4, slot: 2 }, // M84
+  { r16: 7, slot: 1 }, // M85 → R16-96
+  { r16: 6, slot: 1 }, // M86 → R16-95
+  { r16: 7, slot: 2 }, // M87
+  { r16: 6, slot: 2 }, // M88
+];
+
+/** QF match index → SF match + slot (FIFA pairs QF0+QF2, QF1+QF3) */
+const QF_TO_SF: { sf: number; slot: 1 | 2 }[] = [
+  { sf: 0, slot: 1 },
+  { sf: 1, slot: 1 },
+  { sf: 0, slot: 2 },
+  { sf: 1, slot: 2 },
+];
+
+export interface BracketAdvanceTarget {
+  nextRound: number;
+  nextIndex: number;
+  slot: 1 | 2;
+}
+
+export function getBracketAdvanceTarget(
+  round: number,
+  index: number,
+): BracketAdvanceTarget | null {
+  if (round >= 4) return null;
+
+  if (round === 0) {
+    const m = R32_TO_R16[index];
+    if (!m) return null;
+    return { nextRound: 1, nextIndex: m.r16, slot: m.slot };
+  }
+
+  if (round === 1) {
+    return {
+      nextRound: 2,
+      nextIndex: Math.floor(index / 2),
+      slot: index % 2 === 0 ? 1 : 2,
+    };
+  }
+
+  if (round === 2) {
+    const m = QF_TO_SF[index];
+    if (!m) return null;
+    return { nextRound: 3, nextIndex: m.sf, slot: m.slot };
+  }
+
+  if (round === 3) {
+    return {
+      nextRound: 4,
+      nextIndex: 0,
+      slot: index % 2 === 0 ? 1 : 2,
+    };
+  }
+
+  return null;
+}
+
+export function getNextMatchId(
+  round: number,
+  index: number,
+): { targetMatchId: string; position: 1 | 2 } | null {
+  const t = getBracketAdvanceTarget(round, index);
+  if (!t) return null;
+
+  const prefix =
+    t.nextRound === 1
+      ? 'r16'
+      : t.nextRound === 2
+        ? 'qf'
+        : t.nextRound === 3
+          ? 'sf'
+          : 'final';
+
+  return { targetMatchId: `${prefix}-${t.nextIndex}`, position: t.slot };
+}

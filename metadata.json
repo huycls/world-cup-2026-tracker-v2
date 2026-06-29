@@ -1,0 +1,6 @@
+{
+  "name": "World Cup 2026 Tracker",
+  "description": "Ứng dụng theo dõi, cập nhật và giả lập kết quả World Cup 2026 theo cấu trúc phân nhánh Radial, thiết kế tông màu Vàng Đen chuẩn giải đấu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
