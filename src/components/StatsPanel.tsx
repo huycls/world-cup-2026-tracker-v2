@@ -157,9 +157,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
             <span className="text-xl font-bold font-mono text-red-500 block my-0.5">
               {tournamentStats.redCards}
             </span>
-            <span className="text-[9px] text-red-600 block font-bold">
-              🟥 Trục xuất
-            </span>
+            <span className="text-[9px] text-red-600 block font-bold">🟥</span>
           </div>
         </div>
       </div>
@@ -167,7 +165,8 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
       {/* 3. Top Scorers List (Vua Phá Lưới) - Updates live! */}
       <div className="flex-1 flex flex-col min-h-[200px] overflow-hidden border-t border-[#D4AF37]/20 pt-3">
         <h4 className="text-xs font-sans font-bold text-neutral-400 uppercase tracking-wider flex items-center gap-1.5 mb-2.5">
-          <Footprints className="w-3.5 h-3.5 text-[#D4AF37]" /> Vua Phá Lưới
+          <Footprints className="w-3.5 h-3.5 text-[#D4AF37]" /> Số bàn thắng
+          vòng Knockout
         </h4>
 
         {/* Scorers Scrolling container */}

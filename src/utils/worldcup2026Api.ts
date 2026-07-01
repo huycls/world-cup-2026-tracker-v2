@@ -1,5 +1,5 @@
 import { Match, MatchEvent, Team } from '../types';
-import { getBracketAdvanceTarget } from '../data/bracket2026';
+import { getBracketAdvanceTarget, FIFA_R32_VISUAL_ORDER } from '../data/bracket2026';
 
 const API_BASE = 'https://worldcup26.ir';
 
@@ -470,7 +470,7 @@ export function mapScheduleToBracketMatches(
 }
 
 export function buildOuterRingTeams(r32Matches: Match[], teams: Team[]): Team[] {
-  const sorted = [...r32Matches].sort((a, b) => a.index - b.index);
+  const byIndex = new Map(r32Matches.map((m) => [m.index, m]));
   const slots: Team[] = [];
 
   const placeholder = (
@@ -497,7 +497,15 @@ export function buildOuterRingTeams(r32Matches: Match[], teams: Team[]): Team[] 
     },
   });
 
-  for (const match of sorted) {
+  for (const r32Idx of FIFA_R32_VISUAL_ORDER) {
+    const match = byIndex.get(r32Idx);
+    if (!match) {
+      slots.push(
+        placeholder(`r32-${r32Idx}-t1`, 'Chờ xác định', null),
+        placeholder(`r32-${r32Idx}-t2`, 'Chờ xác định', null),
+      );
+      continue;
+    }
     for (const slot of [1, 2] as const) {
       const id = slot === 1 ? match.team1Id : match.team2Id;
       const name = slot === 1 ? match.team1Name : match.team2Name;

@@ -47,6 +47,39 @@ export const R32_SLOT_TEAM_IDS: string[] = [
   'au', 'ir', // M88: 2D vs 2G
 ];
 
+/**
+ * FIFA chart order on the circular bracket:
+ * left half top→bottom, then right half top→bottom (values = R32 match index 0–15).
+ * Source: official FIFA WC 2026 knockout bracket poster.
+ */
+export const FIFA_R32_VISUAL_ORDER: readonly number[] = [
+  1, 4, 0, 2, 10, 11, 8, 9, 3, 5, 6, 7, 13, 15, 12, 14,
+];
+
+/** R32 match index → visual pair slot (0–15) on the outer ring */
+export function getR32VisualPairSlot(r32MatchIndex: number): number {
+  const slot = FIFA_R32_VISUAL_ORDER.indexOf(r32MatchIndex);
+  return slot >= 0 ? slot : r32MatchIndex;
+}
+
+/** R16 match index → feeder R32 match indices [team1, team2] */
+export const R16_FEEDER_R32: ReadonlyArray<readonly [number, number]> = [
+  [1, 4], // M89: W74 vs W77
+  [0, 2], // M90: W73 vs W75
+  [3, 5], // M91: W76 vs W78
+  [6, 7], // M92: W79 vs W80
+  [10, 11], // M93: W83 vs W84
+  [8, 9], // M94: W81 vs W82
+  [13, 15], // M95: W86 vs W88
+  [12, 14], // M96: W85 vs W87
+];
+
+/** SF match index → feeder QF match indices (FIFA: QF0+QF2, QF1+QF3) */
+export const SF_FEEDER_QF: ReadonlyArray<readonly [number, number]> = [
+  [0, 2],
+  [1, 3],
+];
+
 /** R32 match index → R16 match index + slot (FIFA crossover, not binary tree) */
 const R32_TO_R16: { r16: number; slot: 1 | 2 }[] = [
   { r16: 1, slot: 1 }, // M73 → R16-90

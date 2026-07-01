@@ -1,5 +1,5 @@
 import { Team, Match } from './types';
-import { R32_SLOT_TEAM_IDS } from './data/bracket2026';
+import { FIFA_R32_VISUAL_ORDER, R32_SLOT_TEAM_IDS } from './data/bracket2026';
 
 const emptyStats = (possession = 50) => ({
   goalsScored: 0,
@@ -102,9 +102,13 @@ export const INITIAL_TEAMS: Team[] = [
 
 const teamById = new Map(INITIAL_TEAMS.map((team) => [team.id, team]));
 
-/** 32 teams in FIFA R32 outer-ring order (for bracket visualization) */
+/** 32 teams in FIFA chart visual order (for bracket visualization) */
 export function getBracketTeams(): Team[] {
-  return R32_SLOT_TEAM_IDS.map((id) => {
+  const ids: string[] = [];
+  for (const r32Idx of FIFA_R32_VISUAL_ORDER) {
+    ids.push(R32_SLOT_TEAM_IDS[r32Idx * 2], R32_SLOT_TEAM_IDS[r32Idx * 2 + 1]);
+  }
+  return ids.map((id) => {
     const team = teamById.get(id);
     if (!team) throw new Error(`Bracket team not found: ${id}`);
     return team;

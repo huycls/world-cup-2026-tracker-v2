@@ -289,7 +289,7 @@ export default function App() {
                 <LiveTicker matches={bracketMatches} teams={teamsWithLiveStats} />
               </div>
 
-              <div className="lg:col-span-6 flex flex-col items-center justify-center relative bg-radial-gradient py-6 px-2 rounded-2xl border border-[#D4AF37]/10 overflow-hidden">
+              <div className="lg:col-span-6 flex flex-col items-center justify-center relative bg-radial-gradient py-6 px-2 rounded-2xl border border-[#D4AF37]/10 overflow-visible">
                 <div
                   className="absolute inset-0 opacity-10 pointer-events-none"
                   style={{
