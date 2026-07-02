@@ -19,6 +19,7 @@ import {
   ShieldAlert,
   Zap,
 } from "lucide-react";
+import { getTeamFlagUrl } from "../utils/teamFlag";
 
 interface CircularBracketProps {
   teams: Team[];
@@ -353,7 +354,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                 className="w-72 bg-neutral-950/95 border border-yellow-500/40 rounded-xl p-4 shadow-2xl backdrop-blur-xl drop-shadow-[0_10px_20px_rgba(0,0,0,0.8)]">
                 <div className="flex items-center gap-3 border-b border-yellow-500/20 pb-2 mb-3">
                   <img
-                    src={`https://flagcdn.com/w80/${hoveredTeam.code}.png`}
+                    src={getTeamFlagUrl(hoveredTeam.code)}
                     alt={hoveredTeam.name}
                     referrerPolicy="no-referrer"
                     className="w-10 h-7 rounded object-cover border border-neutral-800 shadow"
@@ -468,7 +469,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                         {ht1 ? (
                           <>
                             <img
-                              src={`https://flagcdn.com/w80/${ht1.code}.png`}
+                              src={getTeamFlagUrl(ht1.code)}
                               alt=""
                               referrerPolicy="no-referrer"
                               className="w-10 h-7 rounded object-cover mx-auto mb-1 border border-neutral-800"
@@ -522,7 +523,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                         {ht2 ? (
                           <>
                             <img
-                              src={`https://flagcdn.com/w80/${ht2.code}.png`}
+                              src={getTeamFlagUrl(ht2.code)}
                               alt=""
                               referrerPolicy="no-referrer"
                               className="w-10 h-7 rounded object-cover mx-auto mb-1 border border-neutral-800"
@@ -929,7 +930,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
               />
               {/* Circular cropped Flag Image */}
               <image
-                href={`https://flagcdn.com/w80/${team.code}.png`}
+                href={getTeamFlagUrl(team.code)}
                 x="-16"
                 y="-16"
                 height="32"
@@ -1124,7 +1125,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                 />
                 {t1 ? (
                   <image
-                    href={`https://flagcdn.com/w80/${t1.code}.png`}
+                    href={getTeamFlagUrl(t1.code)}
                     x="-16"
                     y="-16"
                     height="32"
@@ -1156,7 +1157,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                 />
                 {t2 ? (
                   <image
-                    href={`https://flagcdn.com/w80/${t2.code}.png`}
+                    href={getTeamFlagUrl(t2.code)}
                     x="-16"
                     y="-16"
                     height="32"

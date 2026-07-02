@@ -2,6 +2,7 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Match, Team } from '../types';
 import { Flame, CheckCircle2 } from 'lucide-react';
+import { getTeamFlagUrl } from '../utils/teamFlag';
 
 interface LiveTickerProps {
   matches: Match[];
@@ -91,7 +92,7 @@ export const LiveTicker: React.FC<LiveTickerProps> = ({ matches, teams }) => {
                     <div className="grid grid-cols-7 items-center gap-1">
                       <div className="col-span-2 flex flex-col items-center">
                         <img
-                          src={`https://flagcdn.com/w80/${t1.code}.png`}
+                          src={getTeamFlagUrl(t1.code)}
                           alt=""
                           referrerPolicy="no-referrer"
                           className="w-8 h-5 rounded object-cover shadow border border-neutral-800"
@@ -107,7 +108,7 @@ export const LiveTicker: React.FC<LiveTickerProps> = ({ matches, teams }) => {
                       </div>
                       <div className="col-span-2 flex flex-col items-center">
                         <img
-                          src={`https://flagcdn.com/w80/${t2.code}.png`}
+                          src={getTeamFlagUrl(t2.code)}
                           alt=""
                           referrerPolicy="no-referrer"
                           className="w-8 h-5 rounded object-cover shadow border border-neutral-800"
