@@ -978,7 +978,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
               className="fill-radial from-yellow-500/25 to-transparent stroke-none"
             />
             <image
-              href="/src/assets/images/worldcup_trophy_1782699459275.jpg"
+              href="/world-cup-trophy.svg"
               x="0"
               y="0"
               height="90"
