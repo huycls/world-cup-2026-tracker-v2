@@ -252,7 +252,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-6">
+      <main className="max-w-[1560px] mx-auto px-4 py-6">
         <div className="flex flex-col sm:flex-row items-center gap-4 justify-center mb-6 max-w-md mx-auto lg:hidden">
           <div className="flex p-1 bg-black/40 border border-[#D4AF37]/20 rounded-xl w-full">
             <button

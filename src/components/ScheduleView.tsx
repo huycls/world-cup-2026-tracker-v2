@@ -13,6 +13,7 @@ import {
   Zap,
 } from "lucide-react";
 import { getMatchVenue, getTeamLineup } from "../utils/matchHelpers";
+import { getTeamFlagUrl } from "../utils/teamFlag";
 
 interface ScheduleViewProps {
   teams: Team[];
@@ -132,7 +133,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
               </span>
               {evtTeam?.code && (
                 <img
-                  src={`https://flagcdn.com/w80/${evtTeam.code}.png`}
+                  src={getTeamFlagUrl(evtTeam.code)}
                   alt=""
                   referrerPolicy="no-referrer"
                   className="w-4 h-3 rounded-sm object-cover border border-neutral-800 shrink-0"
@@ -257,7 +258,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             </div>
 
             {/* Matches List */}
-            <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[640px] pr-2">
+            <div className="flex-1 flex flex-col gap-3 overflow-y-auto max-h-[740px] pr-2">
               <AnimatePresence mode="popLayout">
                 {filteredMatches.map((match) => {
                   const t1Display = getTeamDisplay(match, 1);
@@ -273,7 +274,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       onClick={() => setSelectedMatchId(match.id)}
-                      className={`border rounded-xl p-3.5 transition-all min-h-20 duration-300 cursor-pointer relative overflow-hidden group ${
+                      className={`border rounded-xl p-3.5 transition-all min-h-28 duration-300 cursor-pointer relative overflow-hidden group ${
                         isSelected
                           ? "bg-[#111] border-[#D4AF37] shadow-[0_0_15px_rgba(212,175,55,0.15)]"
                           : "bg-black/40 border-[#D4AF37]/10 hover:border-[#D4AF37]/35 hover:bg-neutral-900/40"
@@ -311,7 +312,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                               {/* <span className="flex items-center gap-1 shrink-0 ml-1 bg-black/40 px-1 py-0.5 rounded border border-neutral-800/40">
                                 {t1Display.code && (
                                   <img
-                                    src={`https://flagcdn.com/w80/${t1Display.code}.png`}
+                                    src={getTeamFlagUrl(t1Display.code)}
                                     alt=""
                                     referrerPolicy="no-referrer"
                                     className="w-4 h-2.5 rounded-sm object-cover border border-neutral-800 shrink-0"
@@ -319,7 +320,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                                 )}
                                 {t2Display.code && (
                                   <img
-                                    src={`https://flagcdn.com/w80/${t2Display.code}.png`}
+                                    src={getTeamFlagUrl(t2Display.code)}
                                     alt=""
                                     referrerPolicy="no-referrer"
                                     className="w-4 h-2.5 rounded-sm object-cover border border-neutral-800 shrink-0"
@@ -355,7 +356,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                             <>
                               {t1Display.code && (
                                 <img
-                                  src={`https://flagcdn.com/w80/${t1Display.code}.png`}
+                                  src={getTeamFlagUrl(t1Display.code)}
                                   alt=""
                                   referrerPolicy="no-referrer"
                                   className="w-8 h-5 rounded object-cover border border-neutral-800/80 shadow shrink-0"
@@ -407,7 +408,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                               </span>
                               {t2Display.code && (
                                 <img
-                                  src={`https://flagcdn.com/w80/${t2Display.code}.png`}
+                                  src={getTeamFlagUrl(t2Display.code)}
                                   alt=""
                                   referrerPolicy="no-referrer"
                                   className="w-8 h-5 rounded object-cover border border-neutral-800/80 shadow shrink-0"
@@ -426,8 +427,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                           )}
                         </div>
                       </div>
-
-                      {renderMatchEvents(match, true)}
+                      {/* 
+                      {renderMatchEvents(match, true)} */}
 
                       {/* Footer Row */}
                       <div className="flex justify-between items-center text-[10px] text-neutral-500 border-t border-neutral-900/60 pt-2 mt-2">
@@ -541,7 +542,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                             {team1 ? (
                               <>
                                 <img
-                                  src={`https://flagcdn.com/w80/${team1.code}.png`}
+                                  src={getTeamFlagUrl(team1.code)}
                                   alt=""
                                   referrerPolicy="no-referrer"
                                   className="w-5 h-3.5 rounded object-cover"
@@ -599,7 +600,7 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                                   {team2.name}
                                 </span>
                                 <img
-                                  src={`https://flagcdn.com/w80/${team2.code}.png`}
+                                  src={getTeamFlagUrl(team2.code)}
                                   alt=""
                                   referrerPolicy="no-referrer"
                                   className="w-5 h-3.5 rounded object-cover"

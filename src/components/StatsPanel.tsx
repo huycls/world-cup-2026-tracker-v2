@@ -11,6 +11,7 @@ import {
   Footprints,
   HelpCircle,
 } from "lucide-react";
+import { getTeamFlagUrl } from "../utils/teamFlag";
 
 interface StatsPanelProps {
   teams: Team[];
@@ -77,7 +78,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
 
             <div className="flex items-center justify-center gap-2 mt-2 mb-1">
               <img
-                src={`https://flagcdn.com/w80/${champion.code}.png`}
+                src={getTeamFlagUrl(champion.code)}
                 alt=""
                 referrerPolicy="no-referrer"
                 className="w-10 h-7 rounded object-cover border border-[#D4AF37] shadow-md"
@@ -198,7 +199,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
                     </div>
                     <div className="flex items-center gap-1.5 mt-0.5">
                       <img
-                        src={`https://flagcdn.com/w80/${player.teamCode}.png`}
+                        src={getTeamFlagUrl(player.teamCode)}
                         alt=""
                         referrerPolicy="no-referrer"
                         className="w-3.5 h-2.5 rounded object-cover border border-neutral-800"
@@ -246,7 +247,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
                   className="flex items-center justify-between text-[11px] bg-black/40 p-1.5 rounded border border-neutral-900">
                   <span className="flex items-center gap-1 font-semibold text-neutral-300 truncate max-w-[70px]">
                     <img
-                      src={`https://flagcdn.com/w80/${t.code}.png`}
+                      src={getTeamFlagUrl(t.code)}
                       alt=""
                       referrerPolicy="no-referrer"
                       className="w-3 h-2 rounded object-cover"
@@ -273,7 +274,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
                   className="flex items-center justify-between text-[11px] bg-black/40 p-1.5 rounded border border-neutral-900">
                   <span className="flex items-center gap-1 font-semibold text-neutral-300 truncate max-w-[70px]">
                     <img
-                      src={`https://flagcdn.com/w80/${t.code}.png`}
+                      src={getTeamFlagUrl(t.code)}
                       alt=""
                       referrerPolicy="no-referrer"
                       className="w-3 h-2 rounded object-cover"
