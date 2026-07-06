@@ -170,7 +170,7 @@ export const StatsPanel: React.FC<StatsPanelProps> = ({
         </h4>
 
         {/* Scorers Scrolling container */}
-        <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-neutral-900 max-h-[300px]">
+        <div className="flex-1 overflow-y-auto pr-1 space-y-2 scrollbar-thin scrollbar-thumb-neutral-900">
           {tournamentStats.topScorers.length > 0 ? (
             tournamentStats.topScorers.slice(0, 8).map((player, idx) => (
               <div

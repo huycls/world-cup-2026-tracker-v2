@@ -74,6 +74,14 @@ export const R16_FEEDER_R32: ReadonlyArray<readonly [number, number]> = [
   [12, 14], // M96: W85 vs W87
 ];
 
+/** QF match index → feeder R16 match indices (FIFA crossover) */
+export const QF_FEEDER_R16: ReadonlyArray<readonly [number, number]> = [
+  [0, 1], // M97: W89 vs W90
+  [4, 5], // M98: W93 vs W94
+  [2, 3], // M99: W91 vs W92
+  [6, 7], // M100: W95 vs W96
+];
+
 /** SF match index → feeder QF match indices (FIFA: QF0+QF2, QF1+QF3) */
 export const SF_FEEDER_QF: ReadonlyArray<readonly [number, number]> = [
   [0, 2],
@@ -98,6 +106,18 @@ const R32_TO_R16: { r16: number; slot: 1 | 2 }[] = [
   { r16: 6, slot: 1 }, // M86 → R16-95
   { r16: 7, slot: 2 }, // M87
   { r16: 6, slot: 2 }, // M88
+];
+
+/** R16 match index → QF match + slot (FIFA crossover, not binary tree) */
+const R16_TO_QF: { qf: number; slot: 1 | 2 }[] = [
+  { qf: 0, slot: 1 }, // M89 → M97
+  { qf: 0, slot: 2 }, // M90
+  { qf: 2, slot: 1 }, // M91 → M99
+  { qf: 2, slot: 2 }, // M92
+  { qf: 1, slot: 1 }, // M93 → M98
+  { qf: 1, slot: 2 }, // M94
+  { qf: 3, slot: 1 }, // M95 → M100
+  { qf: 3, slot: 2 }, // M96
 ];
 
 /** QF match index → SF match + slot (FIFA pairs QF0+QF2, QF1+QF3) */
@@ -127,11 +147,9 @@ export function getBracketAdvanceTarget(
   }
 
   if (round === 1) {
-    return {
-      nextRound: 2,
-      nextIndex: Math.floor(index / 2),
-      slot: index % 2 === 0 ? 1 : 2,
-    };
+    const m = R16_TO_QF[index];
+    if (!m) return null;
+    return { nextRound: 2, nextIndex: m.qf, slot: m.slot };
   }
 
   if (round === 2) {

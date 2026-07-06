@@ -1,5 +1,15 @@
 import { Team } from '../types';
 
+/** API / bracket placeholder labels without a real team yet */
+export function isPlaceholderTeamLabel(name?: string | null): boolean {
+  if (!name) return true;
+  return /winner|runner|loser|3rd group|tbd|chờ xác định/i.test(name);
+}
+
+export function hasValidFlagCode(code?: string | null): boolean {
+  return Boolean(code && code !== 'xx');
+}
+
 export function getMatchVenue(round: number, index: number) {
   const venues = [
     { stadium: 'Estadio Azteca', city: 'Mexico City, Mexico' },

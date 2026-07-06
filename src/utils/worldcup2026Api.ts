@@ -92,12 +92,20 @@ function getMatchWinnerId(match: Match): string | null {
   if (match.status !== 'finished' || match.score1 === null || match.score2 === null) {
     return null;
   }
+  const pickWinner = (slot: 1 | 2): string | null => {
+    const id = slot === 1 ? match.team1Id : match.team2Id;
+    const code = slot === 1 ? match.team1Code : match.team2Code;
+    if (id) return id;
+    if (code && code !== 'xx') return code;
+    return null;
+  };
+
   if (match.penalties1 !== undefined && match.penalties2 !== undefined) {
     if (match.penalties1 === match.penalties2) return null;
-    return match.penalties1 > match.penalties2 ? match.team1Id : match.team2Id;
+    return match.penalties1 > match.penalties2 ? pickWinner(1) : pickWinner(2);
   }
   if (match.score1 === match.score2) return null;
-  return match.score1 > match.score2 ? match.team1Id : match.team2Id;
+  return match.score1 > match.score2 ? pickWinner(1) : pickWinner(2);
 }
 
 function copyTeamSlot(
@@ -106,16 +114,17 @@ function copyTeamSlot(
   sourceId: string | null,
   sourceName?: string,
   sourceCode?: string | null,
+  overwrite = false,
 ): void {
   if (!sourceId) return;
   if (slot === 1) {
-    if (!target.team1Id) target.team1Id = sourceId;
-    if (!target.team1Name && sourceName) target.team1Name = sourceName;
-    if (!target.team1Code && sourceCode) target.team1Code = sourceCode;
+    if (overwrite || !target.team1Id) target.team1Id = sourceId;
+    if (sourceName && (overwrite || !target.team1Name)) target.team1Name = sourceName;
+    if (sourceCode && (overwrite || !target.team1Code)) target.team1Code = sourceCode;
   } else {
-    if (!target.team2Id) target.team2Id = sourceId;
-    if (!target.team2Name && sourceName) target.team2Name = sourceName;
-    if (!target.team2Code && sourceCode) target.team2Code = sourceCode;
+    if (overwrite || !target.team2Id) target.team2Id = sourceId;
+    if (sourceName && (overwrite || !target.team2Name)) target.team2Name = sourceName;
+    if (sourceCode && (overwrite || !target.team2Code)) target.team2Code = sourceCode;
   }
 }
 
@@ -138,7 +147,7 @@ function propagateBracketWinners(matches: Match[]): Match[] {
     const parent = findMatch(advance.nextRound, advance.nextIndex);
     if (!parent) continue;
 
-    copyTeamSlot(parent, advance.slot, winnerId, winnerName ?? undefined, winnerCode);
+    copyTeamSlot(parent, advance.slot, winnerId, winnerName ?? undefined, winnerCode, true);
   }
 
   return result;
@@ -196,6 +205,7 @@ const TEAM_NAME_TO_FLAG: Record<string, string> = {
   Senegal: 'sn',
   Norway: 'no',
   'United States': 'us',
+  USA: 'us',
   Colombia: 'co',
   Portugal: 'pt',
   Croatia: 'hr',
@@ -297,7 +307,11 @@ function buildTeamLookup(teams: Team[]): Map<string, string> {
   teams.forEach((t) => {
     lookup.set(t.englishName.toLowerCase(), t.id);
     lookup.set(t.name.toLowerCase(), t.id);
+    lookup.set(t.code.toLowerCase(), t.id);
   });
+  for (const [alias, id] of Object.entries(TEAM_NAME_TO_FLAG)) {
+    lookup.set(alias.toLowerCase(), id);
+  }
   return lookup;
 }
 

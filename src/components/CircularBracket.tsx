@@ -5,10 +5,15 @@ import { Team, Match } from "../types";
 import {
   FIFA_R32_VISUAL_ORDER,
   R16_FEEDER_R32,
+  QF_FEEDER_R16,
   SF_FEEDER_QF,
   getBracketAdvanceTarget,
   getR32VisualPairSlot,
 } from "../data/bracket2026";
+import {
+  isPlaceholderTeamLabel,
+  hasValidFlagCode,
+} from "../utils/matchHelpers";
 import {
   Trophy,
   Clock,
@@ -19,6 +24,28 @@ import {
   ShieldAlert,
   Zap,
 } from "lucide-react";
+
+/** Inner bracket: SF flanks trophy horizontally, Final sits above */
+const INNER_SF_X = 132;
+const INNER_FINAL_Y = 108;
+
+function getInnerSFPosition(sfIndex: number, cx: number, cy: number) {
+  return sfIndex === 0
+    ? { x: cx - INNER_SF_X, y: cy }
+    : { x: cx + INNER_SF_X, y: cy };
+}
+
+function getFinalPosition(cx: number, cy: number) {
+  return { x: cx, y: cy - INNER_FINAL_Y };
+}
+
+function drawConvergingCurve(
+  from: { x: number; y: number },
+  to: { x: number; y: number },
+) {
+  const midY = (from.y + to.y) / 2;
+  return `M ${from.x} ${from.y} C ${from.x} ${midY} ${to.x} ${midY} ${to.x} ${to.y}`;
+}
 
 interface CircularBracketProps {
   teams: Team[];
@@ -54,7 +81,6 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
   const R_R32_DOT = (R_FLAGS + R_R16) * 0.55;
   const R_R16_CAP = (R_R16 + R_QF) * 0.55;
   const R_QF_CAP = (R_QF + R_SF) * 0.55;
-  const R_SF_CAP = (R_SF + R_FINAL) * 0.55;
 
   // 1. Calculate angles for all 32 teams (Layer 0)
   // Left side: teams 0-15 (angles around PI / 180 degrees)
@@ -103,10 +129,14 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
       activeNodes.add(`${nodeKey}-${index}`);
 
       if (round === 1) {
-        const qfIdx = Math.floor(index / 2);
-        activeSegments.add(`1-${qfIdx}-${index % 2}`);
-        activeNodes.add(`qf-${qfIdx}`);
-        traceFrom(2, qfIdx);
+        const advance = getBracketAdvanceTarget(1, index);
+        if (advance) {
+          const [r16a, r16b] = QF_FEEDER_R16[advance.nextIndex];
+          const childIdx = index === r16a ? 0 : 1;
+          activeSegments.add(`1-${advance.nextIndex}-${childIdx}`);
+        }
+        activeNodes.add(`qf-${advance?.nextIndex ?? Math.floor(index / 2)}`);
+        if (advance) traceFrom(2, advance.nextIndex);
       } else if (round === 2) {
         const sfIdx = SF_FEEDER_QF.findIndex(
           ([a, b]) => a === index || b === index,
@@ -151,13 +181,20 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
         const advance = getBracketAdvanceTarget(0, index);
         if (advance) traceFrom(advance.nextRound, advance.nextIndex);
       } else if (round === 1) {
-        activeSegments.add(`1-${Math.floor(index / 2)}-${index % 2}`);
+        const advance = getBracketAdvanceTarget(1, index);
+        if (advance) {
+          const [r16a, r16b] = QF_FEEDER_R16[advance.nextIndex];
+          const childIdx = index === r16a ? 0 : 1;
+          activeSegments.add(`1-${advance.nextIndex}-${childIdx}`);
+        }
       } else if (round === 2) {
         const sfIdx = SF_FEEDER_QF.findIndex(
           ([a, b]) => a === index || b === index,
         );
         if (sfIdx >= 0) {
-          activeSegments.add(`2-${sfIdx}-${index === SF_FEEDER_QF[sfIdx][0] ? 0 : 1}`);
+          activeSegments.add(
+            `2-${sfIdx}-${index === SF_FEEDER_QF[sfIdx][0] ? 0 : 1}`,
+          );
         }
       } else if (round === 3) {
         activeSegments.add(`3-0-${index}`);
@@ -186,23 +223,13 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
     [r32JunctionAngles, r32ToVisualPair],
   );
 
-  const qfMatchAngles = useMemo(() => {
-    const angles: number[] = [];
-    for (let i = 0; i < 4; i++) {
-      angles.push((r16MatchAngles[2 * i] + r16MatchAngles[2 * i + 1]) / 2);
-    }
-    return angles;
-  }, [r16MatchAngles]);
-
-  const sfMatchAngles = useMemo(
+  const qfMatchAngles = useMemo(
     () =>
-      SF_FEEDER_QF.map(
-        ([a, b]) => (qfMatchAngles[a] + qfMatchAngles[b]) / 2,
+      QF_FEEDER_R16.map(
+        ([a, b]) => (r16MatchAngles[a] + r16MatchAngles[b]) / 2,
       ),
-    [qfMatchAngles],
+    [r16MatchAngles],
   );
-
-  const finalAngles = useMemo(() => [...sfMatchAngles], [sfMatchAngles]);
 
   // Convert Polar to Cartesian coordinates
   const polarToCartesian = (radius: number, angle: number) => {
@@ -262,7 +289,10 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
 
   const getMatchNodePosition = (match: Match) => {
     if (match.round === 4) {
-      return { x: cx, y: cy - 115 };
+      return getFinalPosition(cx, cy);
+    }
+    if (match.round === 3) {
+      return getInnerSFPosition(match.index, cx, cy);
     }
 
     let radius = 0;
@@ -278,13 +308,13 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
     } else if (match.round === 2) {
       radius = R_QF_CAP;
       angle = qfMatchAngles[match.index];
-    } else if (match.round === 3) {
-      radius = R_SF_CAP;
-      angle = sfMatchAngles[match.index];
     }
 
     return polarToCartesian(radius, angle);
   };
+
+  const getQFNodePosition = (qfIndex: number) =>
+    polarToCartesian(R_QF_CAP, qfMatchAngles[qfIndex]);
 
   // Find a team by its ID safely
   const findTeam = (id: string | null) => {
@@ -300,14 +330,16 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
     const id = slot === 1 ? match.team1Id : match.team2Id;
     const name = slot === 1 ? match.team1Name : match.team2Name;
     const code = slot === 1 ? match.team1Code : match.team2Code;
-    const known = findTeam(id);
+    const known =
+      findTeam(id) ?? (hasValidFlagCode(code) ? findTeam(code!) : null);
     if (known) return known;
-    if (!name) return null;
+    if (isPlaceholderTeamLabel(name)) return null;
+    if (!hasValidFlagCode(code) || !name) return null;
     return {
-      id: id ?? `${match.id}-t${slot}`,
+      id: id ?? code!,
       name,
       englishName: name,
-      code: code ?? "xx",
+      code: code!,
       group: "?",
       rank: 999,
       starPlayer: "—",
@@ -371,8 +403,8 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                 <div className="space-y-2 text-xs">
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-400 flex items-center gap-1">
-                      <Award className="w-3.5 h-3.5 text-yellow-500/80" /> Thứ hạng
-                      FIFA:
+                      <Award className="w-3.5 h-3.5 text-yellow-500/80" /> Thứ
+                      hạng FIFA:
                     </span>
                     <span className="font-bold text-white font-mono">
                       #{hoveredTeam.rank}
@@ -380,7 +412,8 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-400 flex items-center gap-1">
-                      <Clock className="w-3.5 h-3.5 text-yellow-500/80" /> Bảng đấu:
+                      <Clock className="w-3.5 h-3.5 text-yellow-500/80" /> Bảng
+                      đấu:
                     </span>
                     <span className="font-bold text-yellow-400 font-mono">
                       Bảng {hoveredTeam.group}
@@ -388,7 +421,8 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-400 flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-yellow-500/80" /> Ngôi sao:
+                      <Star className="w-3.5 h-3.5 text-yellow-500/80" /> Ngôi
+                      sao:
                     </span>
                     <span className="font-bold text-white text-right truncate max-w-[140px]">
                       {hoveredTeam.starPlayer}
@@ -396,8 +430,8 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                   </div>
                   <div className="flex justify-between items-center">
                     <span className="text-neutral-400 flex items-center gap-1">
-                      <HelpCircle className="w-3.5 h-3.5 text-yellow-500/80" /> Huấn
-                      luyện viên:
+                      <HelpCircle className="w-3.5 h-3.5 text-yellow-500/80" />{" "}
+                      Huấn luyện viên:
                     </span>
                     <span className="font-semibold text-neutral-200">
                       {hoveredTeam.coach}
@@ -409,7 +443,9 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                     </div>
                     <div className="grid grid-cols-3 gap-2 text-center text-[10px]">
                       <div className="bg-neutral-900/60 p-1 rounded border border-neutral-800/40">
-                        <div className="text-red-400 font-bold font-mono">88</div>
+                        <div className="text-red-400 font-bold font-mono">
+                          88
+                        </div>
                         <div className="text-neutral-500">Tấn công</div>
                       </div>
                       <div className="bg-neutral-900/60 p-1 rounded border border-neutral-800/40">
@@ -419,7 +455,9 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                         <div className="text-neutral-500">Trung tuyến</div>
                       </div>
                       <div className="bg-neutral-900/60 p-1 rounded border border-neutral-800/40">
-                        <div className="text-blue-400 font-bold font-mono">84</div>
+                        <div className="text-blue-400 font-bold font-mono">
+                          84
+                        </div>
                         <div className="text-neutral-500">Phòng ngự</div>
                       </div>
                     </div>
@@ -455,13 +493,18 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                   {hoveredMatch.round === 1 && "Vòng 16 Đội"}
                   {hoveredMatch.round === 2 && "Vòng Tứ Kết"}
                   {hoveredMatch.round === 3 && "Vòng Bán Kết"}
-                  {hoveredMatch.round === 4 && "Trận Chung Kết (World Cup 2026)"}
+                  {hoveredMatch.round === 4 &&
+                    "Trận Chung Kết (World Cup 2026)"}
                   <span className="mx-1">•</span> Trận {hoveredMatch.index + 1}
                 </div>
 
                 {(() => {
                   const ht1 = getMatchTeamDisplay(hoveredMatch, 1);
                   const ht2 = getMatchTeamDisplay(hoveredMatch, 2);
+                  const ht1Label =
+                    ht1?.name ?? hoveredMatch.team1Name ?? "Chờ xác định";
+                  const ht2Label =
+                    ht2?.name ?? hoveredMatch.team2Name ?? "Chờ xác định";
                   return (
                     <div className="grid grid-cols-7 gap-1 items-center py-2 mb-2">
                       <div className="col-span-2 text-center">
@@ -474,14 +517,14 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                               className="w-10 h-7 rounded object-cover mx-auto mb-1 border border-neutral-800"
                             />
                             <div className="font-bold text-xs text-white truncate">
-                              {ht1.name}
+                              {ht1Label}
                             </div>
                           </>
                         ) : (
                           <>
                             <HelpCircle className="w-8 h-8 text-neutral-700 mx-auto mb-1" />
-                            <div className="text-xs text-neutral-500 italic">
-                              Chờ xác định
+                            <div className="text-xs text-neutral-500 italic truncate">
+                              {ht1Label}
                             </div>
                           </>
                         )}
@@ -528,14 +571,14 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                               className="w-10 h-7 rounded object-cover mx-auto mb-1 border border-neutral-800"
                             />
                             <div className="font-bold text-xs text-white truncate">
-                              {ht2.name}
+                              {ht2Label}
                             </div>
                           </>
                         ) : (
                           <>
                             <HelpCircle className="w-8 h-8 text-neutral-700 mx-auto mb-1" />
-                            <div className="text-xs text-neutral-500 italic">
-                              Chờ xác định
+                            <div className="text-xs text-neutral-500 italic truncate">
+                              {ht2Label}
                             </div>
                           </>
                         )}
@@ -552,7 +595,8 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
                 {hoveredMatch.events && hoveredMatch.events.length > 0 ? (
                   <div className="border-t border-neutral-900 pt-2 mt-2">
                     <div className="text-[10px] text-neutral-500 uppercase font-bold mb-1 flex items-center gap-1">
-                      <Zap className="w-3 h-3 text-yellow-500" /> Diễn biến chính:
+                      <Zap className="w-3 h-3 text-yellow-500" /> Diễn biến
+                      chính:
                     </div>
                     <div className="max-h-24 overflow-y-auto space-y-1 pr-1 scrollbar-thin scrollbar-thumb-neutral-800">
                       {hoveredMatch.events.map((evt) => {
@@ -759,13 +803,13 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
           );
         })}
 
-        {/* 3. R16 → QF (binary within each half) */}
-        {Array.from({ length: 4 }).map((_, i) => {
+        {/* 3. R16 → QF (FIFA crossover feeders) */}
+        {QF_FEEDER_R16.map(([r16a, r16b], i) => {
           const { pathA, pathB, isSegAActive, isSegBActive } = drawBracketPath(
             R_R16_CAP,
             R_QF_CAP,
-            r16MatchAngles[2 * i],
-            r16MatchAngles[2 * i + 1],
+            r16MatchAngles[r16a],
+            r16MatchAngles[r16b],
             qfMatchAngles[i],
             1,
             i,
@@ -794,106 +838,81 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
           );
         })}
 
-        {/* 4. QF → SF (FIFA crossover: QF0+QF2, QF1+QF3) */}
+        {/* 4. QF → SF (inner cartesian layout) */}
         {SF_FEEDER_QF.map(([qfA, qfB], sfIdx) => {
-          const { pathA, pathB, isSegAActive, isSegBActive } = drawBracketPath(
-            R_QF_CAP,
-            R_SF_CAP,
-            qfMatchAngles[qfA],
-            qfMatchAngles[qfB],
-            sfMatchAngles[sfIdx],
-            2,
-            sfIdx,
-          );
+          const sfPos = getInnerSFPosition(sfIdx, cx, cy);
+          const sfEdge = {
+            x: sfIdx === 0 ? sfPos.x + 45 : sfPos.x - 45,
+            y: sfPos.y,
+          };
           return (
             <g key={`qf-sf-lines-${sfIdx}`}>
-              <path
-                d={pathA}
-                fill="none"
-                className={`transition-all duration-300 ${
-                  isSegAActive
-                    ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
-                    : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
-                }`}
-              />
-              <path
-                d={pathB}
-                fill="none"
-                className={`transition-all duration-300 ${
-                  isSegBActive
-                    ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
-                    : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
-                }`}
-              />
+              {[qfA, qfB].map((qfIdx, childIdx) => {
+                const qfPos = getQFNodePosition(qfIdx);
+                const path = drawConvergingCurve(qfPos, sfEdge);
+                const isActive = activePathDetails.activeSegments.has(
+                  `2-${sfIdx}-${childIdx}`,
+                );
+                return (
+                  <path
+                    key={`qf-sf-${sfIdx}-${childIdx}`}
+                    d={path}
+                    fill="none"
+                    className={`transition-all duration-300 ${
+                      isActive
+                        ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
+                        : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
+                    }`}
+                  />
+                );
+              })}
             </g>
           );
         })}
 
-        {/* 5. SF → Final */}
+        {/* 5. SF → Final + trophy stem */}
         {(() => {
-          const { pathA, pathB, isSegAActive, isSegBActive } = drawBracketPath(
-            R_SF_CAP,
-            R_FINAL,
-            sfMatchAngles[0],
-            sfMatchAngles[1],
-            (sfMatchAngles[0] + sfMatchAngles[1]) / 2,
-            3,
-            0,
-          );
-          return (
-            <g key="sf-final-lines">
-              <path
-                d={pathA}
-                fill="none"
-                className={`transition-all duration-300 ${
-                  isSegAActive
-                    ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
-                    : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
-                }`}
-              />
-              <path
-                d={pathB}
-                fill="none"
-                className={`transition-all duration-300 ${
-                  isSegBActive
-                    ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
-                    : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
-                }`}
-              />
-            </g>
-          );
-        })()}
-
-        {/* 6. Finalists → trophy */}
-        {(() => {
-          const leftFinalP = polarToCartesian(R_FINAL, finalAngles[0]);
-          const rightFinalP = polarToCartesian(R_FINAL, finalAngles[1]);
-          const isLeftFinalActive =
-            activePathDetails.activeSegments.has("4-0-0");
-          const isRightFinalActive =
-            activePathDetails.activeSegments.has("4-0-1");
+          const finalPos = getFinalPosition(cx, cy);
+          const finalBottom = finalPos.y + 25;
+          const trophyTop = cy - 48;
 
           return (
-            <g>
-              {/* Left Finalist to Final node stem */}
+            <g key="inner-finals">
+              {[0, 1].map((sfIdx) => {
+                const sfPos = getInnerSFPosition(sfIdx, cx, cy);
+                const sfTop = sfPos.y - 25;
+                const isActive = activePathDetails.activeSegments.has(
+                  `3-0-${sfIdx}`,
+                );
+                const path =
+                  sfIdx === 0
+                    ? `M ${sfPos.x} ${sfTop} L ${sfPos.x} ${finalBottom} L ${finalPos.x} ${finalBottom}`
+                    : `M ${sfPos.x} ${sfTop} L ${sfPos.x} ${finalBottom} L ${finalPos.x} ${finalBottom}`;
+
+                return (
+                  <path
+                    key={`sf-final-${sfIdx}`}
+                    d={path}
+                    fill="none"
+                    className={`transition-all duration-300 ${
+                      isActive
+                        ? "stroke-yellow-400 stroke-[2.5px] drop-shadow-[0_0_4px_rgba(234,179,8,0.6)]"
+                        : "stroke-neutral-800 hover:stroke-neutral-700 stroke-[1.5px]"
+                    }`}
+                  />
+                );
+              })}
               <path
-                d={`M ${leftFinalP.x} ${leftFinalP.y} L ${cx - 40} ${cy} L ${cx - 40} ${cy - 115} L ${cx} ${cy - 115}`}
+                d={`M ${cx} ${finalPos.y + 25} L ${cx} ${trophyTop}`}
                 fill="none"
-                className={`transition-all duration-300 ${
-                  isLeftFinalActive
-                    ? "stroke-yellow-400 stroke-[3px] drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]"
-                    : "stroke-neutral-800 stroke-[1.5px]"
-                }`}
+                className="stroke-neutral-800 stroke-[1.5px]"
               />
-              {/* Right Finalist to Final node stem */}
-              <path
-                d={`M ${rightFinalP.x} ${rightFinalP.y} L ${cx + 40} ${cy} L ${cx + 40} ${cy - 115} L ${cx} ${cy - 115}`}
-                fill="none"
-                className={`transition-all duration-300 ${
-                  isRightFinalActive
-                    ? "stroke-yellow-400 stroke-[3px] drop-shadow-[0_0_6px_rgba(234,179,8,0.8)]"
-                    : "stroke-neutral-800 stroke-[1.5px]"
-                }`}
+              <line
+                x1={cx - INNER_SF_X - 45}
+                y1={cy}
+                x2={cx + INNER_SF_X + 45}
+                y2={cy}
+                className="stroke-neutral-900 stroke-[1px]"
               />
             </g>
           );
@@ -969,7 +988,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
         {(() => (
           <g
             transform={`translate(${cx - 40}, ${cy - 45})`}
-            className="pointer-events-none transition-all duration-300">
+            className="pointer-events-none transition-all duration-300 rounded-full">
             <circle
               cx="40"
               cy="45"
@@ -982,7 +1001,7 @@ export const CircularBracket: React.FC<CircularBracketProps> = ({
               y="0"
               height="90"
               width="80"
-              className="drop-shadow-[0_0_12px_rgba(234,179,8,0.7)]"
+              className="drop-shadow-[0_0_12px_rgba(234,179,8,0.7)] rounded-full"
               referrerPolicy="no-referrer"
             />
           </g>

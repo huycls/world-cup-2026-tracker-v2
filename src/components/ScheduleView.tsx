@@ -123,7 +123,9 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
             <div
               key={evt.id}
               className={`flex items-center gap-2 text-[11px] ${
-                compact ? "text-neutral-400" : "p-2 rounded-lg bg-black/40 border border-neutral-800/50"
+                compact
+                  ? "text-neutral-400"
+                  : "p-2 rounded-lg bg-black/40 border border-neutral-800/50"
               }`}>
               <span className="font-mono text-[#D4AF37] font-bold shrink-0 w-8">
                 {evt.time}'
@@ -137,7 +139,8 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                 />
               )}
               <span className="shrink-0">{getEventIcon(evt)}</span>
-              <span className={`truncate ${compact ? "text-neutral-300" : "font-semibold text-white"}`}>
+              <span
+                className={`truncate ${compact ? "text-neutral-300" : "font-semibold text-white"}`}>
                 {evt.playerName}
               </span>
               {!compact && (
@@ -302,10 +305,10 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                               <span className="text-neutral-500 font-mono text-xs mx-0.5 leading-none">
                                 -
                               </span>
-                              <span className="leading-none">
+                              <span className="leading-none text-xs">
                                 {t1Display.name} vs {t2Display.name}
                               </span>
-                              <span className="flex items-center gap-1 shrink-0 ml-1 bg-black/40 px-1 py-0.5 rounded border border-neutral-800/40">
+                              {/* <span className="flex items-center gap-1 shrink-0 ml-1 bg-black/40 px-1 py-0.5 rounded border border-neutral-800/40">
                                 {t1Display.code && (
                                   <img
                                     src={`https://flagcdn.com/w80/${t1Display.code}.png`}
@@ -322,11 +325,11 @@ export const ScheduleView: React.FC<ScheduleViewProps> = ({
                                     className="w-4 h-2.5 rounded-sm object-cover border border-neutral-800 shrink-0"
                                   />
                                 )}
-                              </span>
+                              </span> */}
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-2 shrink-0 leading-none">
+                        <div className="flex items-center gap-2 text-xs shrink-0 leading-none">
                           {match.status === "live" ? (
                             <span className="flex items-center gap-1 bg-red-600/20 text-red-500 border border-red-500/30 px-1.5 py-0.5 rounded font-sans font-black tracking-widest animate-pulse leading-none">
                               LIVE {match.liveMinute}'
