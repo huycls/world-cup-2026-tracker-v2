@@ -82,10 +82,10 @@ export const QF_FEEDER_R16: ReadonlyArray<readonly [number, number]> = [
   [6, 7], // M100: W95 vs W96
 ];
 
-/** SF match index → feeder QF match indices (FIFA: QF0+QF2, QF1+QF3) */
+/** SF match index → feeder QF match indices (API: M101 = W97+W98, M102 = W99+W100) */
 export const SF_FEEDER_QF: ReadonlyArray<readonly [number, number]> = [
-  [0, 2],
-  [1, 3],
+  [0, 1], // M101: W97 vs W98
+  [2, 3], // M102: W99 vs W100
 ];
 
 /** R32 match index → R16 match index + slot (FIFA crossover, not binary tree) */
@@ -120,12 +120,12 @@ const R16_TO_QF: { qf: number; slot: 1 | 2 }[] = [
   { qf: 3, slot: 2 }, // M96
 ];
 
-/** QF match index → SF match + slot (FIFA pairs QF0+QF2, QF1+QF3) */
+/** QF match index → SF match + slot (API: M97/M98 → M101, M99/M100 → M102) */
 const QF_TO_SF: { sf: number; slot: 1 | 2 }[] = [
-  { sf: 0, slot: 1 },
-  { sf: 1, slot: 1 },
-  { sf: 0, slot: 2 },
-  { sf: 1, slot: 2 },
+  { sf: 0, slot: 1 }, // M97 → M101 home
+  { sf: 0, slot: 2 }, // M98 → M101 away
+  { sf: 1, slot: 1 }, // M99 → M102 home
+  { sf: 1, slot: 2 }, // M100 → M102 away
 ];
 
 export interface BracketAdvanceTarget {
